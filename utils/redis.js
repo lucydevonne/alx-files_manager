@@ -1,39 +1,13 @@
-#!/usr/bin/node
+// utils/redis.js
 
-const { createClient } = require('redis');
-const { promisify } = require('util');
+const redis = require('redis');
 
-class RedisClient {
-  constructor() {
-    this.client = createClient();
-    this.client.on('error', (err) => console.log(err));
-    this.connected = false;
-    this.client.on('connect', () => {
-      this.connected = true;
-    });
-  }
+// Initialize your Redis client here
+const client = redis.createClient();
 
-  isAlive() {
-    return this.connected;
-  }
+client.on('error', (err) => {
+  console.error(`Redis Error: ${err}`);
+});
 
-  async get(key) {
-    const getAsync = promisify(this.client.get).bind(this.client);
-    const val = await getAsync(key);
-    return val;
-  }
+module.exports = client;
 
-  async set(key, val, dur) {
-    const setAsync = promisify(this.client.set).bind(this.client);
-    await setAsync(key, val, 'EX', dur);
-  }
-
-  async del(key) {
-    const delAsync = promisify(this.client.del).bind(this.client);
-    await delAsync(key);
-  }
-}
-
-const redisClient = new RedisClient();
-
-module.exports = redisClient;

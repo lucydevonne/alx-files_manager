@@ -1,34 +1,28 @@
-const redisUtils = require('../utils/redisUtils');
-const dbUtils = require('../utils/dbUtils');
+// controllers/AppController.js
 
-const AppController = {
-  getStatus: async (req, res) => {
-    try {
-      // Check Redis and DB status using utils
-      const redisStatus = await redisUtils.checkRedis();
-      const dbStatus = await dbUtils.checkDB();
+const redisClient = require('../utils/redis');
+const db = require('../utils/db');
 
-      // Send status response
-      res.status(200).json({ redis: redisStatus, db: dbStatus });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
+exports.getStatus = (req, res) => {
+  // Check Redis and DB status
+  const redisStatus = redisClient.connected;
+  const dbStatus = !db.readyState || db.readyState === 1;
 
-  getStats: async (req, res) => {
-    try {
-      // Count users and files in the DB
-      const userCount = await dbUtils.countUsers();
-      const fileCount = await dbUtils.countFiles();
-
-      // Send statistics response
-      res.status(200).json({ users: userCount, files: fileCount });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
+  res.status(200).json({ redis: redisStatus, db: dbStatus });
 };
 
-module.exports = AppController;
+exports.getStats = async (req, res) => {
+  try {
+    // You should replace 'User' and 'File' with your actual Mongoose models
+    const User = require('../models/User');
+    const File = require('../models/File');
+
+    const userCount = await User.countDocuments();
+    const fileCount = await File.countDocuments();
+
+    res.status(200).json({ users: userCount, files: fileCount });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
