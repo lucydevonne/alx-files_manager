@@ -1,33 +1,36 @@
-const dbClient = require('../utils/db');
-const redisClient = require('../utils/redis');
+// Import necessary modules and models (e.g., mongoose models)
+const { checkRedis, checkDB } = require('../utils/yourUtils'); // Replace with your actual utility functions
+const User = require('../models/User'); // Replace with your actual User model
+const File = require('../models/File'); // Replace with your actual File model
 
 const AppController = {
-  async getStatus(req, res) {
-    const redisStatus = redisClient.isAlive();
-    const dbStatus = dbClient.isAlive();
-    const status = {
-      redis: redisStatus,
-      db: dbStatus,
-    };
+  getStatus: async (req, res) => {
+    try {
+      // Check Redis and DB status using your utility functions
+      const redisStatus = await checkRedis();
+      const dbStatus = await checkDB();
 
-    if (redisStatus && dbStatus) {
-      res.status(200).json(status);
-    } else {
-      res.status(500).json(status);
+      // Send the status response
+      res.status(200).json({ redis: redisStatus, db: dbStatus });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   },
 
-  async getStats(req, res) {
-    const usersCount = await dbClient.nbUsers();
-    const filesCount = await dbClient.nbFiles();
-    const stats = {
-      users: usersCount,
-      files: filesCount,
-    };
+  getStats: async (req, res) => {
+    try {
+      // Count users and files in the database
+      const userCount = await User.countDocuments();
+      const fileCount = await File.countDocuments();
 
-    res.status(200).json(stats);
+      // Send the statistics response
+      res.status(200).json({ users: userCount, files: fileCount });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
   },
 };
 
 module.exports = AppController;
-
